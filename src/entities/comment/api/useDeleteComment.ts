@@ -8,7 +8,7 @@ export const useDeleteComment = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ id, postId }: { id: number; postId: number }) => {
+    mutationFn: async ({ id, postId: _postId }: { id: number; postId: number }) => {
       return await deleteCommentApi(id)
     },
     onMutate: async ({ id, postId }) => {
@@ -32,13 +32,13 @@ export const useDeleteComment = () => {
 
       return { previousComments }
     },
-    onError: (err, { postId }, context) => {
+    onError: (_err, { postId }, context) => {
       // 에러 발생 시 이전 값으로 롤백
       if (context?.previousComments) {
         queryClient.setQueryData(["comments", postId], context.previousComments)
       }
     },
-    onSuccess: (data, { id, postId }) => {
+    onSuccess: (_data, { id, postId }) => {
       // 가짜 API 대응: 로컬 데이터에서 삭제
       // 원래 로직: setComments((prev) => ({ ...prev, [postId]: prev[postId].filter((comment) => comment.id !== id) }))
       usePostStore.getState().deleteLocalComment(postId, id)

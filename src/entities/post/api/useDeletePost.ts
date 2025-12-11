@@ -34,7 +34,7 @@ export const useDeletePost = () => {
 
       return { previousPosts }
     },
-    onError: (err, id, context) => {
+    onError: (_err, _id, context) => {
       // 에러 발생 시 이전 값으로 롤백
       if (context?.previousPosts) {
         context.previousPosts.forEach(([queryKey, data]) => {
@@ -42,7 +42,7 @@ export const useDeletePost = () => {
         })
       }
     },
-    onSuccess: (data, id) => {
+    onSuccess: (_data, id) => {
       // 가짜 API 대응: 로컬 데이터에서 삭제
       usePostStore.getState().deleteLocalPost(id)
 

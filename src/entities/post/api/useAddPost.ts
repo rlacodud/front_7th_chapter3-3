@@ -21,7 +21,7 @@ export const useAddPost = () => {
 
       return newPostWithAuthor
     },
-    onMutate: async (newPost) => {
+    onMutate: async (_newPost) => {
       // 진행 중인 쿼리 취소
       await queryClient.cancelQueries({ queryKey: ["posts"] })
 
@@ -30,7 +30,7 @@ export const useAddPost = () => {
 
       return { previousPosts }
     },
-    onError: (err, newPost, context) => {
+    onError: (_err, _newPost, context) => {
       // 에러 발생 시 이전 값으로 롤백
       if (context?.previousPosts) {
         context.previousPosts.forEach(([queryKey, data]) => {

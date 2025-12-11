@@ -40,7 +40,7 @@ export const useAddComment = () => {
 
       return { previousComments }
     },
-    onError: (err, newComment, context) => {
+    onError: (_err, newComment, context) => {
       // 에러 발생 시 이전 값으로 롤백
       if (context?.previousComments) {
         queryClient.setQueryData(["comments", newComment.postId], context.previousComments)
