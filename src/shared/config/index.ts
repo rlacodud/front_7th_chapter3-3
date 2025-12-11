@@ -4,5 +4,5 @@
 // ✅ 환경 변수에 따라 Base URL 설정
 const isDev = import.meta.env.DEV
 
-export const BASE_URL = isDev ? "/api" : "https://dummyjson.com"
+export const API_URL = isDev ? "/api" : "https://dummyjson.com"
 

@@ -42,9 +42,10 @@ export const useUpdateComment = () => {
     onSuccess: (data, variables) => {
       // 가짜 API 대응: 로컬 데이터 업데이트만 수행
       // 참고 코드처럼 onSuccess에서는 추가 쿼리 업데이트 없이 낙관적 업데이트 상태 유지
-      const postId = (data as CommentType & { postId: number }).postId || variables.postId
-      const { postId: _, ...commentWithoutPostId } = data as CommentType & { postId?: number }
-      usePostStore.getState().updateLocalComment(postId, commentWithoutPostId as CommentType)
+      const postId = data.postId || variables.postId
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { postId: _, ...commentWithoutPostId } = data
+      usePostStore.getState().updateLocalComment(postId, commentWithoutPostId)
     },
   })
 }

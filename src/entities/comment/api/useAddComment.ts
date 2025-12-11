@@ -16,27 +16,21 @@ export const useAddComment = () => {
       await queryClient.cancelQueries({ queryKey: ["comments", newComment.postId] })
 
       // 이전 값 저장 (롤백용)
-      const previousComments = queryClient.getQueryData<{ comments: CommentType[] }>([
-        "comments",
-        newComment.postId,
-      ])
+      const previousComments = queryClient.getQueryData<{ comments: CommentType[] }>(["comments", newComment.postId])
 
       // 낙관적 업데이트
-      queryClient.setQueryData<{ comments: CommentType[] }>(
-        ["comments", newComment.postId],
-        (old) => {
-          if (!old) return { comments: [] }
-          const tempComment: CommentType = {
-            id: Date.now(), // 임시 ID
-            body: newComment.body,
-            user: { id: newComment.userId, username: "로딩 중..." },
-            likes: 0,
-          }
-          return {
-            comments: [...old.comments, tempComment],
-          }
-        },
-      )
+      queryClient.setQueryData<{ comments: CommentType[] }>(["comments", newComment.postId], (old) => {
+        if (!old) return { comments: [] }
+        const tempComment: CommentType = {
+          id: Date.now(), // 임시 ID
+          body: newComment.body,
+          user: { id: newComment.userId, username: "로딩 중..." },
+          likes: 0,
+        }
+        return {
+          comments: [...old.comments, tempComment],
+        }
+      })
 
       return { previousComments }
     },
@@ -49,9 +43,10 @@ export const useAddComment = () => {
     onSuccess: (data) => {
       // 가짜 API 대응: 로컬 데이터에 추가
       // API 응답의 data.postId 사용 (원래 로직과 동일)
-      const postId = (data as CommentType & { postId: number }).postId
-      const { postId: _, ...commentWithoutPostId } = data as CommentType & { postId: number }
-      usePostStore.getState().addLocalComment(postId, commentWithoutPostId as CommentType)
+      const postId = data.postId
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { postId: _, ...commentWithoutPostId } = data
+      usePostStore.getState().addLocalComment(postId, commentWithoutPostId)
 
       // 원래 로직: setComments((prev) => ({ ...prev, [data.postId]: [...(prev[data.postId] || []), data] }))
       // TanStack Query에서는 낙관적 업데이트로 이미 처리되었으므로 쿼리 무효화만 수행
@@ -59,4 +54,3 @@ export const useAddComment = () => {
     },
   })
 }
-

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { usePostStore } from "../../../shared/model/store"
-import { BASE_URL } from "../../../shared/config"
+import { apiClient } from "../../../shared/lib/apiClient"
 
 // 게시물 삭제
 export const useDeletePost = () => {
@@ -8,13 +8,12 @@ export const useDeletePost = () => {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`${BASE_URL}/posts/${id}`, {
-        method: "DELETE",
-      })
-      if (!response.ok) {
+      try {
+        await apiClient.delete(`/posts/${id}`)
+        return { id }
+      } catch (error) {
         throw new Error("게시물 삭제에 실패했습니다.")
       }
-      return { id }
     },
     onMutate: async (id) => {
       // 진행 중인 쿼리 취소
