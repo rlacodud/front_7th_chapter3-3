@@ -1,9 +1,9 @@
 import { CommentType } from "../model/types"
-import { getApiBaseUrl } from "../../../shared/config"
+import { BASE_URL } from "../../../shared/config"
 
 // 1. 댓글 가져오기
 export const getCommentsByPostId = async (postId: number) => {
-  const response = await fetch(`${getApiBaseUrl()}/comments/post/${postId}`)
+  const response = await fetch(`${BASE_URL}/comments/post/${postId}`)
   if (!response.ok) {
     throw new Error("댓글을 불러오는데 실패했습니다.")
   }
@@ -12,7 +12,7 @@ export const getCommentsByPostId = async (postId: number) => {
 
 // 2. 댓글 추가
 export const addCommentApi = async (newComment: { body: string; postId: number; userId: number }) => {
-  const response = await fetch(`${getApiBaseUrl()}/comments/add`, {
+  const response = await fetch(`${BASE_URL}/comments/add`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(newComment),
@@ -25,7 +25,7 @@ export const addCommentApi = async (newComment: { body: string; postId: number; 
 
 // 3. 댓글 수정
 export const updateCommentApi = async (comment: Pick<CommentType, "id" | "body">) => {
-  const response = await fetch(`${getApiBaseUrl()}/comments/${comment.id}`, {
+  const response = await fetch(`${BASE_URL}/comments/${comment.id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ body: comment.body }),
@@ -38,7 +38,7 @@ export const updateCommentApi = async (comment: Pick<CommentType, "id" | "body">
 
 // 4. 댓글 삭제
 export const deleteCommentApi = async (id: number) => {
-  const response = await fetch(`${getApiBaseUrl()}/comments/${id}`, {
+  const response = await fetch(`${BASE_URL}/comments/${id}`, {
     method: "DELETE",
   })
   if (!response.ok) {
@@ -49,7 +49,7 @@ export const deleteCommentApi = async (id: number) => {
 
 // 5. 댓글 좋아요
 export const likeCommentApi = async (id: number, currentLikes: number) => {
-  const response = await fetch(`${getApiBaseUrl()}/comments/${id}`, {
+  const response = await fetch(`${BASE_URL}/comments/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ likes: currentLikes + 1 }),

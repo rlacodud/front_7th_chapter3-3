@@ -1,5 +1,5 @@
 import { Post, PostsResponse, TagsResponse } from "../model/types"
-import { getApiBaseUrl } from "../../../shared/config"
+import { BASE_URL } from "../../../shared/config"
 
 // 공통으로 사용할 URL 파라미터 생성 함수
 const makeParams = (limit: number, skip: number, sortBy?: string, sortOrder?: string) => {
@@ -18,7 +18,7 @@ export const getPosts = async (
   sortOrder?: string,
 ): Promise<PostsResponse> => {
   const params = makeParams(limit, skip, sortBy, sortOrder)
-  const response = await fetch(`${getApiBaseUrl()}/posts?${params}`)
+  const response = await fetch(`${BASE_URL}/posts?${params}`)
   return response.json()
 }
 
@@ -31,7 +31,7 @@ export const searchPosts = async (
   sortOrder?: string,
 ): Promise<PostsResponse> => {
   const params = makeParams(limit, skip, sortBy, sortOrder)
-  const response = await fetch(`${getApiBaseUrl()}/posts/search?q=${encodeURIComponent(query)}&${params}`)
+  const response = await fetch(`${BASE_URL}/posts/search?q=${encodeURIComponent(query)}&${params}`)
   return response.json()
 }
 
@@ -44,19 +44,19 @@ export const getPostsByTag = async (
   sortOrder?: string,
 ): Promise<PostsResponse> => {
   const params = makeParams(limit, skip, sortBy, sortOrder)
-  const response = await fetch(`${getApiBaseUrl()}/posts/tag/${tag}?${params}`)
+  const response = await fetch(`${BASE_URL}/posts/tag/${tag}?${params}`)
   return response.json()
 }
 
 // 4. 태그 목록 조회
 export const getTags = async (): Promise<TagsResponse[]> => {
-  const response = await fetch(`${getApiBaseUrl()}/posts/tags`)
+  const response = await fetch(`${BASE_URL}/posts/tags`)
   return response.json()
 }
 
 // 5. 게시글 추가
 export const addPostApi = async (newPost: { title: string; body: string; userId: number }) => {
-  const response = await fetch(`${getApiBaseUrl()}/posts/add`, {
+  const response = await fetch(`${BASE_URL}/posts/add`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(newPost),
@@ -69,7 +69,7 @@ export const addPostApi = async (newPost: { title: string; body: string; userId:
 
 // 6. 게시글 수정
 export const updatePostApi = async (post: Post) => {
-  const response = await fetch(`${getApiBaseUrl()}/posts/${post.id}`, {
+  const response = await fetch(`${BASE_URL}/posts/${post.id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(post),
@@ -82,7 +82,7 @@ export const updatePostApi = async (post: Post) => {
 
 // 7. 게시글 삭제
 export const deletePostApi = async (id: number) => {
-  const response = await fetch(`${getApiBaseUrl()}/posts/${id}`, {
+  const response = await fetch(`${BASE_URL}/posts/${id}`, {
     method: "DELETE",
   })
   if (!response.ok) {
