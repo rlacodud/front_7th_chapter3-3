@@ -17,12 +17,15 @@ export const CommentAddModal = () => {
       return
     }
 
+    // userId는 자동 생성되므로 기본값 사용
+    const userId = typeof newComment.userId === "number" && newComment.userId > 0 ? newComment.userId : 1
+
     try {
       // postId가 null이 아님을 확인했으므로 타입 단언 사용
       await addCommentMutation.mutateAsync({
         body: newComment.body,
         postId: newComment.postId,
-        userId: newComment.userId,
+        userId,
       })
       setShowAddCommentDialog(false)
       resetNewComment()
@@ -44,6 +47,13 @@ export const CommentAddModal = () => {
             value={newComment.body}
             onChange={(e) => setNewComment({ ...newComment, body: e.target.value })}
           />
+          <div>
+            <label className="block text-sm font-medium mb-1">사용자 ID</label>
+            <div className="px-3 py-2 border rounded-md bg-gray-50 text-gray-700">
+              {newComment.userId || "자동 생성됨"}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">댓글 생성 시 자동으로 할당됩니다</p>
+          </div>
           <Button onClick={handleAddComment} disabled={!newComment.postId}>
             댓글 추가
           </Button>

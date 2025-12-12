@@ -26,12 +26,13 @@ interface PostStore {
   selectedUser: User | null
 
   // 폼 상태 (클라이언트 상태)
-  newPost: { title: string; body: string; userId: number }
-  newComment: { body: string; postId: number | null; userId: number }
+  newPost: { title: string; body: string; userId: number | "" }
+  newComment: { body: string; postId: number | null; userId: number | "" }
 
   // 로컬 데이터 (가짜 API 대응)
   localPosts: PostWithAuthor[] // 로컬에 추가/수정된 게시물
   localComments: Record<number, CommentType[]> // 로컬에 추가/수정된 댓글 (postId별)
+  likedComments: Record<number, Set<number>> // 좋아요를 누른 댓글 추적 (commentId -> userId Set)
 
   // Actions
   setSkip: (skip: number) => void
@@ -52,8 +53,8 @@ interface PostStore {
   setSelectedComment: (comment: (CommentType & { postId?: number }) | null) => void
   setSelectedUser: (user: User | null) => void
 
-  setNewPost: (post: { title: string; body: string; userId: number }) => void
-  setNewComment: (comment: { body: string; postId: number | null; userId: number }) => void
+  setNewPost: (post: { title: string; body: string; userId: number | "" }) => void
+  setNewComment: (comment: { body: string; postId: number | null; userId: number | "" }) => void
 
   resetNewPost: () => void
   resetNewComment: () => void
@@ -66,6 +67,8 @@ interface PostStore {
   updateLocalComment: (postId: number, comment: CommentType) => void
   deleteLocalComment: (postId: number, id: number) => void
   likeLocalComment: (postId: number, id: number, likes: number) => void
+  hasUserLikedComment: (commentId: number, userId: number) => boolean
+  addLikedComment: (commentId: number, userId: number) => void
 }
 
 export const usePostStore = create<PostStore>((set) => ({
@@ -88,12 +91,13 @@ export const usePostStore = create<PostStore>((set) => ({
   selectedComment: null,
   selectedUser: null,
 
-  newPost: { title: "", body: "", userId: 1 },
-  newComment: { body: "", postId: null, userId: 1 },
+  newPost: { title: "", body: "", userId: "" },
+  newComment: { body: "", postId: null, userId: "" },
 
   // 로컬 데이터 초기 상태
   localPosts: [],
   localComments: {},
+  likedComments: {},
 
   // Actions
   setSkip: (skip) => set({ skip }),
@@ -117,8 +121,8 @@ export const usePostStore = create<PostStore>((set) => ({
   setNewPost: (newPost) => set({ newPost }),
   setNewComment: (newComment) => set({ newComment }),
 
-  resetNewPost: () => set({ newPost: { title: "", body: "", userId: 1 } }),
-  resetNewComment: () => set({ newComment: { body: "", postId: null, userId: 1 } }),
+  resetNewPost: () => set({ newPost: { title: "", body: "", userId: "" } }),
+  resetNewComment: () => set({ newComment: { body: "", postId: null, userId: "" } }),
 
   // 로컬 데이터 관리 (가짜 API 대응)
   addLocalPost: (post) =>
@@ -161,4 +165,32 @@ export const usePostStore = create<PostStore>((set) => ({
         [postId]: (state.localComments[postId] || []).map((c: CommentType) => (c.id === id ? { ...c, likes } : c)),
       },
     })),
+  hasUserLikedComment: (commentId: number, userId: number): boolean => {
+    const state = usePostStore.getState()
+    const likedSet: Set<number> | undefined = state.likedComments[commentId]
+    return likedSet ? likedSet.has(userId) : false
+  },
+  addLikedComment: (commentId, userId) =>
+    set((state) => {
+      const currentSet = state.likedComments[commentId] || new Set<number>()
+      if (currentSet.has(userId)) {
+        // 이미 좋아요를 눌렀으면 취소 (토글)
+        const newSet = new Set(currentSet)
+        newSet.delete(userId)
+        return {
+          likedComments: {
+            ...state.likedComments,
+            [commentId]: newSet.size > 0 ? newSet : undefined,
+          },
+        }
+      } else {
+        // 좋아요 추가
+        return {
+          likedComments: {
+            ...state.likedComments,
+            [commentId]: new Set([...currentSet, userId]),
+          },
+        }
+      }
+    }),
 }))

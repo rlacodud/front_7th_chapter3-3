@@ -10,12 +10,12 @@ export const PostDetailModal = () => {
 
   return (
     <Dialog open={showPostDetailDialog} onOpenChange={setShowPostDetailDialog}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>{highlightText(selectedPost.title, searchQuery)}</DialogTitle>
+          <DialogTitle className="pr-8">{highlightText(selectedPost.title, searchQuery)}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <p>{highlightText(selectedPost.body, searchQuery)}</p>
+        <div className="space-y-4 overflow-y-auto flex-1 min-h-0">
+          <p className="whitespace-pre-wrap break-words">{highlightText(selectedPost.body, searchQuery)}</p>
           <Comments postId={selectedPost.id} />
         </div>
       </DialogContent>

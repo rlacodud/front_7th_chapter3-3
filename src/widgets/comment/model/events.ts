@@ -14,12 +14,12 @@ export const useCommentEvents = () => {
   }
 
   const handleAddComment = (postId: number) => {
-    setNewComment({ body: "", postId, userId: 1 })
+    setNewComment({ body: "", postId, userId: "" })
     setShowAddCommentDialog(true)
   }
 
-  const handleLikeComment = (id: number, postId: number, currentLikes: number) => {
-    likeCommentMutation.mutate({ id, postId, currentLikes })
+  const handleLikeComment = (id: number, postId: number, currentLikes: number, isLiked: boolean) => {
+    likeCommentMutation.mutate({ id, postId, currentLikes, isLiked })
   }
 
   const handleDeleteComment = (id: number, postId: number) => {

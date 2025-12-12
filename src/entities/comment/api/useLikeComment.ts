@@ -1,35 +1,55 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { CommentType } from "../model/types"
-import { likeCommentApi } from "./commentApi"
+import { toggleLikeCommentApi } from "./commentApi"
 import { usePostStore } from "../../../shared/model/store"
 
-// 댓글 좋아요
+// 댓글 좋아요/취소 (토글)
 export const useLikeComment = () => {
   const queryClient = useQueryClient()
+  const processingIds = new Set<number>() // 처리 중인 댓글 ID 추적
 
   return useMutation({
-    mutationFn: async ({ id, currentLikes }: { id: number; postId: number; currentLikes: number }) => {
-      return await likeCommentApi(id, currentLikes)
+    mutationFn: async ({
+      id,
+      currentLikes,
+      isLiked,
+    }: {
+      id: number
+      postId: number
+      currentLikes: number
+      isLiked: boolean
+    }) => {
+      // 이미 처리 중인 댓글이면 중복 요청 방지
+      if (processingIds.has(id)) {
+        throw new Error("이미 처리 중입니다.")
+      }
+      processingIds.add(id)
+      try {
+        const result = await toggleLikeCommentApi(id, currentLikes, isLiked)
+        return result
+      } finally {
+        // 처리 완료 후 제거
+        setTimeout(() => processingIds.delete(id), 500)
+      }
     },
-    onMutate: async ({ id, postId, currentLikes }) => {
+    onMutate: async ({ id, postId, currentLikes, isLiked }) => {
       // 진행 중인 쿼리 취소
       await queryClient.cancelQueries({ queryKey: ["comments", postId] })
 
       // 이전 값 저장 (롤백용)
       const previousComments = queryClient.getQueryData<{ comments: CommentType[] }>(["comments", postId])
 
-      // 낙관적 업데이트
+      // 낙관적 업데이트: 좋아요 취소면 -1, 좋아요면 +1
+      const newLikes = isLiked ? currentLikes - 1 : currentLikes + 1
       queryClient.setQueryData<{ comments: CommentType[] }>(["comments", postId], (old) => {
         if (!old) return old
         return {
-          comments: old.comments.map((comment) =>
-            comment.id === id ? { ...comment, likes: currentLikes + 1 } : comment,
-          ),
+          comments: old.comments.map((comment) => (comment.id === id ? { ...comment, likes: newLikes } : comment)),
         }
       })
 
-      // 가짜 API 대응: 로컬 데이터도 낙관적 업데이트 (onMutate에서 한 번만 업데이트)
-      usePostStore.getState().likeLocalComment(postId, id, currentLikes + 1)
+      // 가짜 API 대응: 로컬 데이터도 낙관적 업데이트
+      usePostStore.getState().likeLocalComment(postId, id, newLikes)
 
       return { previousComments }
     },
@@ -39,7 +59,5 @@ export const useLikeComment = () => {
         queryClient.setQueryData(["comments", postId], context.previousComments)
       }
     },
-    // 참고 코드처럼 onSuccess 제거 - 낙관적 업데이트 상태를 그대로 유지
-    // 가짜 API이므로 서버 리프레시 없이 낙관적 업데이트 상태 유지
   })
 }

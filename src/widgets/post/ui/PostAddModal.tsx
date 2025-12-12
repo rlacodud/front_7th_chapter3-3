@@ -13,13 +13,15 @@ export const PostAddModal = () => {
       return
     }
 
-    if (newPost.userId <= 0) {
-      alert("유효한 사용자 ID를 입력해주세요.")
-      return
-    }
+    // userId는 자동 생성되므로 기본값 사용
+    const userId = typeof newPost.userId === "number" && newPost.userId > 0 ? newPost.userId : 1
 
     try {
-      await addPostMutation.mutateAsync(newPost)
+      await addPostMutation.mutateAsync({
+        title: newPost.title,
+        body: newPost.body,
+        userId,
+      })
       setShowAddDialog(false)
       resetNewPost()
     } catch (error) {
@@ -46,15 +48,14 @@ export const PostAddModal = () => {
             value={newPost.body}
             onChange={(e) => setNewPost({ ...newPost, body: e.target.value })}
           />
-          <Input
-            type="number"
-            placeholder="사용자 ID"
-            value={newPost.userId}
-            onChange={(e) => setNewPost({ ...newPost, userId: Number(e.target.value) })}
-          />
-          <Button onClick={handleAddPost}>
-            게시물 추가
-          </Button>
+          <div>
+            <label className="block text-sm font-medium mb-1">사용자 ID</label>
+            <div className="px-3 py-2 border rounded-md bg-gray-50 text-gray-700">
+              {newPost.userId || "자동 생성됨"}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">게시물 생성 시 자동으로 할당됩니다</p>
+          </div>
+          <Button onClick={handleAddPost}>게시물 추가</Button>
         </div>
       </DialogContent>
     </Dialog>
