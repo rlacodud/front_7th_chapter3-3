@@ -48,11 +48,20 @@ export const useSearchPosts = (
       // 서버 결과와 로컬 게시물 합치기 (중복 제거)
       const serverPostIds = new Set(filteredServerPosts.map((p) => p.id))
       const uniqueLocalPosts = matchingLocalPosts.filter((p) => !serverPostIds.has(p.id))
-      const combinedPosts = [...filteredServerPosts, ...uniqueLocalPosts]
+
+      // 로컬 게시물은 전체 목록의 맨 마지막에만 표시
+      // 현재 페이지가 마지막 페이지인지 확인 (서버 게시물의 마지막 페이지)
+      const serverTotal = postsData.total
+      const isLastPage = skip + limit >= serverTotal
+
+      // 마지막 페이지인 경우에만 로컬 게시물 추가
+      const combinedPosts = isLastPage
+        ? [...filteredServerPosts, ...uniqueLocalPosts]
+        : filteredServerPosts
 
       return {
         posts: combinedPosts,
-        total: postsData.total + uniqueLocalPosts.length,
+        total: serverTotal + uniqueLocalPosts.length,
       }
     },
     enabled: !!query, // query가 있을 때만 실행

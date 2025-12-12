@@ -24,14 +24,23 @@ export const usePosts = (skip: number, limit: number, sortBy?: string, sortOrder
       // 삭제된 게시물 필터링
       const filteredServerPosts = postsWithUsers.filter((p) => !deletedPostIds.has(p.id))
 
-      // 로컬 게시물과 병합 (중복 제거)
+      // 로컬 게시물 필터링 (삭제된 것 제외, 서버 게시물과 중복 제거)
       const serverPostIds = new Set(filteredServerPosts.map((p) => p.id))
       const uniqueLocalPosts = localPosts.filter((p) => !serverPostIds.has(p.id) && !deletedPostIds.has(p.id))
-      const combinedPosts = [...filteredServerPosts, ...uniqueLocalPosts]
+
+      // 로컬 게시물은 전체 목록의 맨 마지막에만 표시
+      // 현재 페이지가 마지막 페이지인지 확인 (서버 게시물의 마지막 페이지)
+      const serverTotal = postsData.total
+      const isLastPage = skip + limit >= serverTotal
+
+      // 마지막 페이지인 경우에만 로컬 게시물 추가
+      const combinedPosts = isLastPage
+        ? [...filteredServerPosts, ...uniqueLocalPosts]
+        : filteredServerPosts
 
       return {
         posts: combinedPosts,
-        total: postsData.total + uniqueLocalPosts.length,
+        total: serverTotal + uniqueLocalPosts.length,
       }
     },
     staleTime: 1000 * 60 * 5, // 5분

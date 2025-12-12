@@ -9,6 +9,16 @@ export const useDeletePost = () => {
 
   return useMutation({
     mutationFn: async (id: number) => {
+      // 로컬 게시물인지 확인 (로컬 게시물은 API 호출 없이 로컬 상태만 업데이트)
+      const store = usePostStore.getState()
+      const isLocalPost = store.localPosts.some((post) => post.id === id)
+
+      if (isLocalPost) {
+        // 로컬 게시물인 경우 API 호출 없이 성공으로 처리
+        return { id }
+      }
+
+      // 서버 게시물인 경우 API 호출
       try {
         await apiClient.delete(`/posts/${id}`)
         return { id }
@@ -23,6 +33,16 @@ export const useDeletePost = () => {
       // 이전 값 저장 (롤백용)
       const previousPosts = queryClient.getQueriesData({ queryKey: ["posts"] })
 
+      // 로컬 게시물인지 확인
+      const store = usePostStore.getState()
+      const isLocalPost = store.localPosts.some((post) => post.id === id)
+
+      // 로컬 게시물인 경우 즉시 로컬에서 삭제 및 추적
+      if (isLocalPost) {
+        store.deleteLocalPost(id)
+        store.addDeletedPostId(id)
+      }
+
       // 낙관적 업데이트
       queryClient.setQueriesData<{ posts: PostWithAuthor[]; total: number }>({ queryKey: ["posts"] }, (old) => {
         if (!old) return old
@@ -33,7 +53,7 @@ export const useDeletePost = () => {
         }
       })
 
-      return { previousPosts }
+      return { previousPosts, isLocalPost }
     },
     onError: (_err, _id, context) => {
       // 에러 발생 시 이전 값으로 롤백
@@ -42,13 +62,19 @@ export const useDeletePost = () => {
           queryClient.setQueryData(queryKey, data)
         })
       }
+      // 로컬 게시물이었다면 롤백 (하지만 이미 삭제되었으므로 복구는 어려움)
+      // 서버 게시물 삭제 실패 시에만 롤백
     },
-    onSuccess: (_data, id) => {
+    onSuccess: (_data, id, context) => {
       const store = usePostStore.getState()
-      // 가짜 API 대응: 로컬 데이터에서 삭제
-      store.deleteLocalPost(id)
-      // 삭제된 게시물 ID 추적
-      store.addDeletedPostId(id)
+
+      // 로컬 게시물이 아닌 경우에만 처리 (로컬 게시물은 onMutate에서 이미 처리됨)
+      if (!context?.isLocalPost) {
+        // 서버 게시물 삭제: 로컬 데이터에서도 삭제 (혹시 로컬에 캐시된 경우)
+        store.deleteLocalPost(id)
+        // 삭제된 게시물 ID 추적
+        store.addDeletedPostId(id)
+      }
 
       // 관련 쿼리 무효화하여 리프레시
       queryClient.invalidateQueries({ queryKey: ["posts"], refetchType: "all" })
