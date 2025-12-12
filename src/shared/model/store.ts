@@ -33,6 +33,8 @@ interface PostStore {
   localPosts: PostWithAuthor[] // 로컬에 추가/수정된 게시물
   localComments: Record<number, CommentType[]> // 로컬에 추가/수정된 댓글 (postId별)
   likedComments: Record<number, Set<number>> // 좋아요를 누른 댓글 추적 (commentId -> userId Set)
+  deletedPostIds: Set<number> // 삭제된 게시물 ID 추적
+  deletedCommentIds: Record<number, Set<number>> // 삭제된 댓글 ID 추적 (postId -> commentId Set)
 
   // Actions
   setSkip: (skip: number) => void
@@ -66,6 +68,8 @@ interface PostStore {
   addLocalComment: (postId: number, comment: CommentType) => void
   updateLocalComment: (postId: number, comment: CommentType) => void
   deleteLocalComment: (postId: number, id: number) => void
+  addDeletedPostId: (id: number) => void
+  addDeletedCommentId: (postId: number, commentId: number) => void
   likeLocalComment: (postId: number, id: number, likes: number) => void
   hasUserLikedComment: (commentId: number, userId: number) => boolean
   addLikedComment: (commentId: number, userId: number) => void
@@ -98,6 +102,8 @@ export const usePostStore = create<PostStore>((set) => ({
   localPosts: [],
   localComments: {},
   likedComments: {},
+  deletedPostIds: new Set<number>(),
+  deletedCommentIds: {},
 
   // Actions
   setSkip: (skip) => set({ skip }),
@@ -158,6 +164,20 @@ export const usePostStore = create<PostStore>((set) => ({
         [postId]: (state.localComments[postId] || []).filter((c: CommentType) => c.id !== id),
       },
     })),
+  addDeletedPostId: (id) =>
+    set((state) => ({
+      deletedPostIds: new Set([...state.deletedPostIds, id]),
+    })),
+  addDeletedCommentId: (postId, commentId) =>
+    set((state) => {
+      const currentSet = state.deletedCommentIds[postId] || new Set<number>()
+      return {
+        deletedCommentIds: {
+          ...state.deletedCommentIds,
+          [postId]: new Set([...currentSet, commentId]),
+        },
+      }
+    }),
   likeLocalComment: (postId, id, likes) =>
     set((state) => ({
       localComments: {

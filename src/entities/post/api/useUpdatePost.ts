@@ -10,6 +10,25 @@ export const useUpdatePost = () => {
 
   return useMutation({
     mutationFn: async (post: Post) => {
+      // 로컬 게시물인지 확인 (로컬 게시물은 API 호출 없이 로컬 상태만 업데이트)
+      const store = usePostStore.getState()
+      const isLocalPost = store.localPosts.some((p) => p.id === post.id)
+
+      if (isLocalPost) {
+        // 로컬 게시물인 경우 API 호출 없이 로컬 상태만 업데이트
+        const localPost = store.localPosts.find((p) => p.id === post.id)
+        if (localPost) {
+          const updatedPostWithAuthor: PostWithAuthor = {
+            ...localPost,
+            ...post,
+            // author는 기존 것 유지
+            author: localPost.author,
+          }
+          return updatedPostWithAuthor
+        }
+      }
+
+      // 서버 게시물인 경우 API 호출
       const updatedPostData = await updatePostApi(post)
       const usersData = await getUsers()
       const author = usersData.users.find((user: { id: number }) => user.id === updatedPostData.userId)

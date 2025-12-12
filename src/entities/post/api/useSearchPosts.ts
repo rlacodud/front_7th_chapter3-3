@@ -30,19 +30,25 @@ export const useSearchPosts = (
       }))
 
       // 로컬 게시물 가져오기
-      const localPosts = usePostStore.getState().localPosts
+      const store = usePostStore.getState()
+      const localPosts = store.localPosts
+      const deletedPostIds = store.deletedPostIds
 
-      // 로컬 게시물 중 검색어와 일치하는 것 찾기
+      // 삭제된 게시물 필터링
+      const filteredServerPosts = postsWithUsers.filter((p) => !deletedPostIds.has(p.id))
+
+      // 로컬 게시물 중 검색어와 일치하는 것 찾기 (삭제된 것 제외)
       const matchingLocalPosts = localPosts.filter(
         (post) =>
-          post.title.toLowerCase().includes(query.toLowerCase()) ||
-          post.body.toLowerCase().includes(query.toLowerCase()),
+          !deletedPostIds.has(post.id) &&
+          (post.title.toLowerCase().includes(query.toLowerCase()) ||
+            post.body.toLowerCase().includes(query.toLowerCase())),
       )
 
       // 서버 결과와 로컬 게시물 합치기 (중복 제거)
-      const serverPostIds = new Set(postsWithUsers.map((p) => p.id))
+      const serverPostIds = new Set(filteredServerPosts.map((p) => p.id))
       const uniqueLocalPosts = matchingLocalPosts.filter((p) => !serverPostIds.has(p.id))
-      const combinedPosts = [...postsWithUsers, ...uniqueLocalPosts]
+      const combinedPosts = [...filteredServerPosts, ...uniqueLocalPosts]
 
       return {
         posts: combinedPosts,

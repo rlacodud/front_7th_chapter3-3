@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { PostWithAuthor } from "../model/types"
 import { usePostStore } from "../../../shared/model/store"
 import { apiClient } from "../../../shared/lib/apiClient"
 
@@ -11,7 +12,7 @@ export const useDeletePost = () => {
       try {
         await apiClient.delete(`/posts/${id}`)
         return { id }
-      } catch (error) {
+      } catch {
         throw new Error("게시물 삭제에 실패했습니다.")
       }
     },
@@ -23,7 +24,7 @@ export const useDeletePost = () => {
       const previousPosts = queryClient.getQueriesData({ queryKey: ["posts"] })
 
       // 낙관적 업데이트
-      queryClient.setQueriesData<{ posts: any[]; total: number }>({ queryKey: ["posts"] }, (old) => {
+      queryClient.setQueriesData<{ posts: PostWithAuthor[]; total: number }>({ queryKey: ["posts"] }, (old) => {
         if (!old) return old
         return {
           ...old,
@@ -43,12 +44,14 @@ export const useDeletePost = () => {
       }
     },
     onSuccess: (_data, id) => {
+      const store = usePostStore.getState()
       // 가짜 API 대응: 로컬 데이터에서 삭제
-      usePostStore.getState().deleteLocalPost(id)
+      store.deleteLocalPost(id)
+      // 삭제된 게시물 ID 추적
+      store.addDeletedPostId(id)
 
       // 관련 쿼리 무효화하여 리프레시
       queryClient.invalidateQueries({ queryKey: ["posts"], refetchType: "all" })
     },
   })
 }
-

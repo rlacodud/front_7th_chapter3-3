@@ -17,12 +17,17 @@ export const usePosts = (skip: number, limit: number, sortBy?: string, sortOrder
       }))
 
       // 로컬 게시물 가져오기
-      const localPosts = usePostStore.getState().localPosts
+      const store = usePostStore.getState()
+      const localPosts = store.localPosts
+      const deletedPostIds = store.deletedPostIds
+
+      // 삭제된 게시물 필터링
+      const filteredServerPosts = postsWithUsers.filter((p) => !deletedPostIds.has(p.id))
 
       // 로컬 게시물과 병합 (중복 제거)
-      const serverPostIds = new Set(postsWithUsers.map((p) => p.id))
-      const uniqueLocalPosts = localPosts.filter((p) => !serverPostIds.has(p.id))
-      const combinedPosts = [...postsWithUsers, ...uniqueLocalPosts]
+      const serverPostIds = new Set(filteredServerPosts.map((p) => p.id))
+      const uniqueLocalPosts = localPosts.filter((p) => !serverPostIds.has(p.id) && !deletedPostIds.has(p.id))
+      const combinedPosts = [...filteredServerPosts, ...uniqueLocalPosts]
 
       return {
         posts: combinedPosts,

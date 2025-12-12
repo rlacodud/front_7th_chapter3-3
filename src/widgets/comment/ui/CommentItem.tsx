@@ -26,7 +26,10 @@ export const CommentItem = ({ comment, postId, searchQuery }: CommentItemProps) 
 
     setIsLiking(true)
     addLikedComment(comment.id, currentUserId) // 좋아요 상태 토글
-    handleLikeComment(comment.id, postId, comment.likes, hasLiked)
+    // likes가 undefined나 NaN인 경우 0으로 처리
+    const safeLikes = comment.likes ?? 0
+    const numericLikes = Number.isNaN(safeLikes) ? 0 : safeLikes
+    handleLikeComment(comment.id, postId, numericLikes, hasLiked)
     // 짧은 딜레이 후 다시 클릭 가능하도록 (중복 방지)
     setTimeout(() => setIsLiking(false), 1000)
   }
@@ -47,7 +50,7 @@ export const CommentItem = ({ comment, postId, searchQuery }: CommentItemProps) 
           title={hasLiked ? "좋아요 취소" : "좋아요"}
         >
           <ThumbsUp className={`w-3 h-3 ${hasLiked ? "fill-current" : ""}`} />
-          <span className="ml-1 text-xs">{comment.likes}</span>
+          <span className="ml-1 text-xs">{comment.likes ?? 0}</span>
         </Button>
         <Button variant="ghost" size="sm" onClick={() => handleEditComment({ ...comment, postId })}>
           <Edit2 className="w-3 h-3" />

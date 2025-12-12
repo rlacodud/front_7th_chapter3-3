@@ -9,11 +9,28 @@ export const useUpdateComment = () => {
 
   return useMutation({
     mutationFn: async (comment: Pick<CommentType, "id" | "body"> & { postId: number }) => {
+      // 로컬 댓글인지 확인 (로컬 댓글은 API 호출 없이 로컬 상태만 업데이트)
+      const store = usePostStore.getState()
+      const localComments = store.localComments[comment.postId] || []
+      const isLocalComment = localComments.some((c) => c.id === comment.id)
+
+      if (isLocalComment) {
+        // 로컬 댓글인 경우 API 호출 없이 성공으로 처리
+        const localComment = localComments.find((c) => c.id === comment.id)
+        if (localComment) {
+          return {
+            ...localComment,
+            body: comment.body,
+            postId: comment.postId,
+          } as CommentType & { postId: number }
+        }
+      }
+
       return await updateCommentApi({ id: comment.id, body: comment.body })
     },
     onMutate: async (updatedComment) => {
       const queryKey = ["comments", updatedComment.postId]
-      
+
       // 진행 중인 쿼리 취소
       await queryClient.cancelQueries({ queryKey })
 
@@ -49,4 +66,3 @@ export const useUpdateComment = () => {
     },
   })
 }
-

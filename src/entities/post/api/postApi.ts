@@ -61,7 +61,7 @@ export const getTags = async (): Promise<TagsResponse[]> => {
 export const addPostApi = async (newPost: { title: string; body: string; userId: number }): Promise<Post> => {
   try {
     return await apiClient.post<Post>("/posts/add", newPost)
-  } catch (error) {
+  } catch {
     throw new Error("게시물 추가에 실패했습니다.")
   }
 }
@@ -70,7 +70,7 @@ export const addPostApi = async (newPost: { title: string; body: string; userId:
 export const updatePostApi = async (post: Post): Promise<Post> => {
   try {
     return await apiClient.put<Post>(`/posts/${post.id}`, post)
-  } catch (error) {
+  } catch {
     throw new Error("게시물 수정에 실패했습니다.")
   }
 }
@@ -79,8 +79,7 @@ export const updatePostApi = async (post: Post): Promise<Post> => {
 export const deletePostApi = async (id: number) => {
   try {
     return await apiClient.delete(`/posts/${id}`)
-  } catch (error) {
+  } catch {
     throw new Error("게시물 삭제에 실패했습니다.")
   }
 }
-

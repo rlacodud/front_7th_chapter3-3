@@ -8,7 +8,17 @@ export const useDeleteComment = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ id, postId: _postId }: { id: number; postId: number }) => {
+    mutationFn: async ({ id, postId }: { id: number; postId: number }) => {
+      // 로컬 댓글인지 확인 (로컬 댓글은 API 호출 없이 로컬 상태만 업데이트)
+      const store = usePostStore.getState()
+      const localComments = store.localComments[postId] || []
+      const isLocalComment = localComments.some((comment) => comment.id === id)
+
+      if (isLocalComment) {
+        // 로컬 댓글인 경우 API 호출 없이 성공으로 처리
+        return { id }
+      }
+
       return await deleteCommentApi(id)
     },
     onMutate: async ({ id, postId }) => {
@@ -39,9 +49,11 @@ export const useDeleteComment = () => {
       }
     },
     onSuccess: (_data, { id, postId }) => {
+      const store = usePostStore.getState()
       // 가짜 API 대응: 로컬 데이터에서 삭제
-      // 원래 로직: setComments((prev) => ({ ...prev, [postId]: prev[postId].filter((comment) => comment.id !== id) }))
-      usePostStore.getState().deleteLocalComment(postId, id)
+      store.deleteLocalComment(postId, id)
+      // 삭제된 댓글 ID 추적
+      store.addDeletedCommentId(postId, id)
 
       // 관련 쿼리 무효화하여 리프레시
       queryClient.invalidateQueries({ queryKey: ["comments", postId], refetchType: "all" })
