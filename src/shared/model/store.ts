@@ -177,11 +177,14 @@ export const usePostStore = create<PostStore>((set) => ({
         // 이미 좋아요를 눌렀으면 취소 (토글)
         const newSet = new Set(currentSet)
         newSet.delete(userId)
+        const newLikedComments = { ...state.likedComments }
+        if (newSet.size > 0) {
+          newLikedComments[commentId] = newSet
+        } else {
+          delete newLikedComments[commentId]
+        }
         return {
-          likedComments: {
-            ...state.likedComments,
-            [commentId]: newSet.size > 0 ? newSet : undefined,
-          },
+          likedComments: newLikedComments,
         }
       } else {
         // 좋아요 추가
